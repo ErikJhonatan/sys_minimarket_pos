@@ -2,6 +2,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
 import Login from '../auth/Login';
 import Dashboard from '../modules/dashboard/Dashboard';
+import Categorias from '../modules/categorias/CategoriaList';
+import Clientes from '../modules/clientes/ClienteList';
+import Ventas from '../modules/ventas/VentaList';
+import Reportes from '../modules/reportes/ReporteList';
 import Productos from '../modules/productos/ProductoList';
 import ProtectedRoute from '../auth/ProtectedRoute';
 
@@ -30,6 +34,39 @@ const AppRouter = () => {
             </ProtectedRoute>
           }
         />
+
+        <Route
+        path="/categorias"
+        element={
+          <ProtectedRoute>
+            <Categorias />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/clientes"
+        element={
+          <ProtectedRoute>
+            <Clientes />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ventas"
+        element={
+          <ProtectedRoute>
+            <Ventas />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reportes"
+        element={
+          <ProtectedRoute>
+            <Reportes />
+          </ProtectedRoute>
+        }
+      />
 
         {/* Ruta por defecto */}
         <Route path="*" element={<Navigate to="/dashboard" />} />
