@@ -3,6 +3,21 @@ import { Navigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import config from '../config';
 
+const LoadingSpinner = () => (
+  <div style={{
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100vh',
+    fontSize: '16px',
+    color: '#666'
+  }}>
+    <span className="loading loading-spinner loading-lg"></span>
+    <p>Verificando sesión...</p>
+  </div>
+);
+
 const ProtectedRoute = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuth, setIsAuth] = useState(false);
@@ -11,7 +26,7 @@ const ProtectedRoute = ({ children }) => {
     const verifyToken = async () => {
       try {
         const token = localStorage.getItem(config.nameItemJwt);
-        
+
         if (!token) {
           setIsAuth(false);
           setLoading(false);
@@ -37,7 +52,7 @@ const ProtectedRoute = ({ children }) => {
     verifyToken();
   }, []);
 
-  if (loading) return <p>Verificando sesión...</p>;
+  if (loading) return <LoadingSpinner />;
   if (!isAuth) return <Navigate to="/login" replace />;
   return children;
 };

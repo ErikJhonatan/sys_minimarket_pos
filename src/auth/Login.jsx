@@ -1,31 +1,40 @@
 import { useForm } from "react-hook-form";
-import axios from "../api/axiosInstance"; // tu helper de axios con baseURL
 import { useNavigate } from "react-router-dom";
-import config from "../config";
 import { useState } from "react";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 import { MdEmail, MdLock } from "react-icons/md";
+import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const navigate = useNavigate();
   const [errorMessage, setErrorMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
 
   const onSubmit = async (data) => {
+    setIsLoading(true);
+    setErrorMessage("");
+
     try {
-      const response = await axios.post("/auth/login", data); // cambia si tu ruta es diferente
-      console.log(response.data);
-      const token = response.data.token;
-      localStorage.setItem(config.nameItemJwt, token); // guarda el token en localStorage
-      navigate("/dashboard"); // redirige al área protegida
+      const result = await login(data);
+
+      if (result.success) {
+        navigate("/dashboard");
+      } else {
+        setErrorMessage(result.error);
+        setTimeout(() => setErrorMessage(""), 3000);
+      }
     } catch (error) {
-      setErrorMessage("Credenciales inválidas");
-      setTimeout(() => setErrorMessage(""), 3000); // Oculta el mensaje después de 3 segundos
+      setErrorMessage("Error inesperado. Intenta nuevamente.");
+      setTimeout(() => setErrorMessage(""), 3000);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -85,9 +94,17 @@ const Login = () => {
           <div>
             <button
               type="submit"
-              className="btn btn-primary btn-block transition-transform hover:scale-105 active:scale-95"
+              disabled={isLoading}
+              className="btn btn-primary btn-block transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
             >
-              Iniciar Sesión
+              {isLoading ? (
+                <>
+                  <span className="loading loading-spinner loading-sm"></span>
+                  Iniciando...
+                </>
+              ) : (
+                "Iniciar Sesión"
+              )}
             </button>
           </div>
         </form>
