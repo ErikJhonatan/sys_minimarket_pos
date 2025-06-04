@@ -5,8 +5,7 @@ export const createProductSchema = z.object({
     .min(3, "El nombre debe tener al menos 3 caracteres")
     .max(15, "El nombre no debe superar los 15 caracteres"),
   price: z.number()
-    .int("El precio debe ser un número entero")
-    .min(10, "El precio mínimo es 10"),
+    .min(0.10, "El precio mínimo es 0.10"),
   description: z.string()
     .min(10, "La descripción debe tener al menos 10 caracteres")
     .max(100, "La descripción no debe superar los 100 caracteres"),
@@ -15,7 +14,22 @@ export const createProductSchema = z.object({
   categoryId: z.number()
     .int("El ID de la categoría debe ser un número entero")
     .min(1, "El ID de la categoría debe ser mayor o igual a 1"),
-});
+  stock: z.number()
+    .int("El stock debe ser un número entero")
+    .min(0, "El stock no puede ser negativo"),
+  stockMin: z.number()
+    .int("El stock mínimo debe ser un número entero")
+    .min(0, "El stock mínimo no puede ser negativo"),
+  code: z.string()
+    .min(3, "El código debe tener al menos 3 caracteres")
+    .max(20, "El código no debe superar los 20 caracteres"),
+}).refine(
+  (data) => data.stock >= data.stockMin,
+  {
+    message: "El stock actual debe ser mayor o igual al stock mínimo",
+    path: ["stock"],
+  }
+);
 
 export const updateProductSchema = z.object({
   name: z.string()
@@ -23,8 +37,7 @@ export const updateProductSchema = z.object({
     .max(15, "El nombre no debe superar los 15 caracteres")
     .optional(),
   price: z.number()
-    .int("El precio debe ser un número entero")
-    .min(10, "El precio mínimo es 10")
+    .min(0.10, "El precio mínimo es 0.10")
     .optional(),
   description: z.string()
     .min(10, "La descripción debe tener al menos 10 caracteres")
@@ -37,6 +50,18 @@ export const updateProductSchema = z.object({
     .int("El ID de la categoría debe ser un número entero")
     .min(1, "El ID de la categoría debe ser mayor o igual a 1")
     .optional(),
+  stock: z.number()
+    .int("El stock debe ser un número entero")
+    .min(0, "El stock no puede ser negativo")
+    .optional(),
+  stockMin: z.number()
+    .int("El stock mínimo debe ser un número entero")
+    .min(0, "El stock mínimo no puede ser negativo")
+    .optional(),
+  code: z.string()
+    .min(3, "El código debe tener al menos 3 caracteres")
+    .max(20, "El código no debe superar los 20 caracteres")
+    .optional(),
 });
 
 export const getProductSchema = z.object({
@@ -47,7 +72,7 @@ export const getProductSchema = z.object({
 export const queryProductSchema = z.object({
   limit: z.number()
     .int("El límite debe ser un número entero")
-    .min(1, "El límite mínimo es 1")
+    .min(1, "el límite mínimo es 1")
     .max(50, "El límite máximo es 50")
     .optional(),
   offset: z.number()
@@ -55,17 +80,14 @@ export const queryProductSchema = z.object({
     .min(0, "El offset no puede ser negativo")
     .optional(),
   price: z.number()
-    .int("El precio debe ser un número entero")
-    .min(10, "El precio mínimo es 10")
+    .min(0.10, "El precio mínimo es 0.10")
     .optional(),
   price_min: z.number()
-    .int("El precio mínimo debe ser un número entero")
-    .min(10, "El precio mínimo es 10")
+    .min(0.10, "El precio mínimo es 0.10")
     .default(0)
     .optional(),
   price_max: z.number()
-    .int("El precio máximo debe ser un número entero")
-    .min(10, "El precio máximo debe ser al menos 10")
+    .min(0.10, "El precio máximo debe ser al menos 0.10")
     .optional(),
 }).refine(
   (data) => !data.price_min || !data.price_max || data.price_max >= data.price_min,

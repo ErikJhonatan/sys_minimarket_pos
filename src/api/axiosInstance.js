@@ -2,15 +2,11 @@ import config from '../config';
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-  baseURL: config.apiUrl
-});
-
-axiosInstance.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
+  baseURL: config.apiUrl,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
 export default axiosInstance;
