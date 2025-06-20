@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   HiSearch,
   HiShoppingCart,
@@ -20,7 +20,17 @@ import productoApi from "../../api/productoApi";
 import clienteApi from "../../api/clienteApi";
 import ventaApi from "../../api/ventaApi";
 
+import { calculateSubtotal, calculateTax, hasAvailableStock, addCartItem, updateCartQuantity, removeCartItem } from './utils/sale-calculations';
+
 const NuevaVenta = () => {
+  const submission = useRef(false);
+  const timers = useRef(new Set());
+  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+  const schedule = (callback, delay) => {
+    const timer = setTimeout(() => { timers.current.delete(timer); callback(); }, delay);
+    timers.current.add(timer);
+    return timer;
+  };
   const [productos, setProductos] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [carrito, setCarrito] = useState([]);
@@ -83,7 +93,7 @@ const NuevaVenta = () => {
     });
 
     // Auto-eliminar después de 5 segundos
-    setTimeout(() => {
+    schedule(() => {
       setAlerts((prev) => prev.filter((alert) => alert.id !== id));
     }, 5000);
   };
@@ -162,7 +172,6 @@ const NuevaVenta = () => {
       const response = await productoApi.getAll();
       setProductos(response);
     } catch (error) {
-      console.error("Error al cargar productos:", error);
       agregarAlerta("error", "Error al cargar productos. Intenta nuevamente.");
     }
   };
@@ -172,7 +181,6 @@ const NuevaVenta = () => {
       const response = await clienteApi.getAll();
       setClientes(response);
     } catch (error) {
-      console.error("Error al cargar clientes:", error);
       agregarAlerta("error", "Error al cargar clientes. Intenta nuevamente.");
     }
   };
@@ -267,6 +275,8 @@ const NuevaVenta = () => {
   }, [searchTerm]);
 
   const agregarAlCarrito = (producto) => {
+    if (submission.current) return;
+    if (!Number.isFinite(Number(producto.price)) || Number(producto.price) < 0) return;
     // Prevenir clics múltiples rápidos
     const now = Date.now();
     if (now - lastClickTime < 500) {
@@ -297,19 +307,16 @@ const NuevaVenta = () => {
     // Actualizar carrito y mostrar alerta apropiada
     const existente = carrito.find((item) => item.id === producto.id);
     if (existente) {
-      setCarrito((prev) =>
-        prev.map((item) =>
-          item.id === producto.id ? { ...item, cantidad: item.cantidad + 1 } : item
-        )
-      );
+      setCarrito(prev => addCartItem(prev, producto));
       agregarAlerta("info", `Se agregó una unidad más de ${producto.name} al carrito`);
     } else {
-      setCarrito((prev) => [...prev, { ...producto, cantidad: 1 }]);
+      setCarrito(prev => addCartItem(prev, producto));
       agregarAlerta("success", `${producto.name} agregado al carrito`);
     }
   };
 
   const actualizarCantidad = (id, nuevaCantidad) => {
+    if (submission.current || !Number.isSafeInteger(nuevaCantidad)) return;
     if (nuevaCantidad <= 0) {
       eliminarDelCarrito(id);
       return;
@@ -325,26 +332,20 @@ const NuevaVenta = () => {
       return;
     }
 
-    setCarrito((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, cantidad: nuevaCantidad } : item))
-    );
+    setCarrito(prev => updateCartQuantity(prev, id, nuevaCantidad, productos));
   };
 
   const eliminarDelCarrito = (id) => {
+    if (submission.current) return;
     const producto = carrito.find((item) => item.id === id);
     if (producto) {
       agregarAlerta("info", `${producto.name} eliminado del carrito`);
     }
-    setCarrito((prev) => prev.filter((item) => item.id !== id));
+    setCarrito(prev => removeCartItem(prev, id));
   };
 
-  const calcularSubtotal = () => {
-    return carrito.reduce((total, item) => total + item.price * item.cantidad, 0);
-  };
-
-  const calcularImpuesto = (subtotal) => {
-    return subtotal * 0.1; // 10% de impuesto
-  };
+  const calcularSubtotal = () => calculateSubtotal(carrito);
+  const calcularImpuesto = calculateTax;
 
   const calcularTotal = () => {
     const subtotal = calcularSubtotal();
@@ -353,6 +354,7 @@ const NuevaVenta = () => {
   };
 
   const procesarVenta = async () => {
+    if (submission.current) return;
     if (carrito.length === 0) {
       agregarAlerta("warning", "El carrito está vacío");
       return;
@@ -372,37 +374,20 @@ const NuevaVenta = () => {
     }
 
     // Verificar stock de todos los productos en el carrito
-    const productosConProblemas = carrito.filter((item) => {
-      const producto = productos.find((p) => p.id === item.id);
-      return !producto || item.cantidad > (producto.stock || 0);
-    });
+    const productosConProblemas = carrito.filter(item => !hasAvailableStock(item, productos));
 
     if (productosConProblemas.length > 0) {
       agregarAlerta("error", `Algunos productos exceden el stock disponible. Revisa el carrito.`);
       return;
     }
 
+    submission.current = true;
     setProcessingPayment(true);
     try {
-      // Crear la orden - el customerId es requerido
-      const orderData = {
-        customerId: parseInt(selectedClient),
-      };
-
-      console.log("Enviando orden:", orderData);
-      const nuevaOrden = await ventaApi.create(orderData);
-      console.log("Orden creada:", nuevaOrden);
-
-      // Agregar productos a la orden
-      for (const item of carrito) {
-        const itemData = {
-          orderId: nuevaOrden.newOrder.id,
-          productId: item.id,
-          amount: item.cantidad,
-        };
-        console.log("Agregando item:", itemData);
-        await ventaApi.addItem(itemData);
-      }
+      await ventaApi.create({
+        customerId: Number(selectedClient),
+        items: carrito.map(item => ({ productId: item.id, amount: item.cantidad })),
+      });
 
       // Limpiar carrito y formulario
       setCarrito([]);
@@ -412,16 +397,13 @@ const NuevaVenta = () => {
       agregarAlerta("success", "¡Venta procesada exitosamente!");
 
       // Esperar un poco antes de navegar para que el usuario vea la alerta
-      setTimeout(() => {
+      schedule(() => {
         navigate("/ventas");
       }, 2000);
     } catch (error) {
-      console.error("Error al procesar venta:", error);
 
       // Mostrar mensaje de error más específico
       if (error.response) {
-        console.error("Response data:", error.response.data);
-        console.error("Response status:", error.response.status);
         agregarAlerta(
           "error",
           `Error al procesar la venta: ${error.response.data.message || "Error del servidor"}`
@@ -430,6 +412,7 @@ const NuevaVenta = () => {
         agregarAlerta("error", "Error de conexión al procesar la venta");
       }
     } finally {
+      submission.current = false;
       setProcessingPayment(false);
     }
   };

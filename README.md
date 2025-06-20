@@ -86,3 +86,7 @@ Las contribuciones son bienvenidas. Crea un `pull request` o abre un `issue` par
 ## 📄 Licencia
 
 Este proyecto está bajo la licencia MIT.
+
+## Cambios de comportamiento
+
+El formulario de venta envía cliente y todos los productos en un único POST `/orders`; necesita la versión del backend que acepta `items` y los escribe atómicamente. Durante el envío se bloquean solicitudes duplicadas. Cantidades y stock se comprueban antes de enviar, y los totales se calculan en céntimos conservando el impuesto mostrado del 10%.
