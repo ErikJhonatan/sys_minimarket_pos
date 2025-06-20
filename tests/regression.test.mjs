@@ -22,3 +22,13 @@ test('repeated additions cannot exceed stock', () => {
   assert.equal(addCartItem(cart, product), cart);
   assert.equal(updateCartQuantity(cart, 1, 2, [product]), cart);
 });
+
+test('rejects missing prices and unsafe totals without changing the cart', () => {
+  for (const price of [null, '', '  ', true, Infinity]) {
+    assert.throws(() => calculateSubtotal([{price, cantidad: 1}]));
+    const cart = [];
+    assert.equal(addCartItem(cart, {id: 1, price, stock: 1}), cart);
+  }
+  assert.throws(() => calculateTax(-1));
+  assert.throws(() => calculateSubtotal([{price: Number.MAX_SAFE_INTEGER, cantidad: 2}]));
+});

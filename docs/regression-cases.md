@@ -11,3 +11,9 @@ Prepared for this change. **Not executed.** Tests, manual checks, lint and build
 | Cleanup | Navigate away with active alert/navigation timers | Timers cleared |
 
 Automated cases are prepared in `tests/regression.test.mjs`. After authorization, run `node --test tests/regression.test.mjs`. They have not been executed.
+
+## Additional cases (not executed)
+
+| Case | Input or setup | Expected outcome |
+| --- | --- | --- |
+| Invalid amounts | Null/blank prices and unsafe subtotals | Invalid additions leave the cart unchanged; invalid tax input is rejected |

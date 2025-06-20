@@ -1,7 +1,12 @@
+function validPrice(value) {
+  return (typeof value === 'number' || (typeof value === 'string' && value.trim() !== '')) &&
+    Number(value) >= 0 && Number.isSafeInteger(Math.round(Number(value) * 100));
+}
+
 export function calculateSubtotal(items) {
   const cents = items.reduce((total, item) => {
     const price = Number(item.price);
-    if (!Number.isFinite(price) || price < 0 || !Number.isSafeInteger(item.cantidad) || item.cantidad <= 0) {
+    if (!validPrice(item.price) || !Number.isSafeInteger(item.cantidad) || item.cantidad <= 0) {
       throw new Error('Precio o cantidad inválidos');
     }
     const next = total + Math.round(price * 100) * item.cantidad;
@@ -12,6 +17,7 @@ export function calculateSubtotal(items) {
 }
 
 export function calculateTax(subtotal) {
+  if (!validPrice(subtotal)) throw new Error('Subtotal inválido');
   return Math.round(Math.round(subtotal * 100) * 0.1) / 100;
 }
 
@@ -25,15 +31,17 @@ export function addCartItem(cart, product) {
   const existing = cart.find(item => item.id === product.id);
   const quantity = (existing?.cantidad ?? 0) + 1;
   if (!hasAvailableStock({id: product.id, cantidad: quantity}, [product]) ||
-      !Number.isFinite(Number(product.price)) || Number(product.price) < 0) return cart;
-  return existing ? cart.map(item => item.id === product.id ? {...item, cantidad: quantity} : item)
+      !validPrice(product.price)) return cart;
+  const next = existing ? cart.map(item => item.id === product.id ? {...item, cantidad: quantity} : item)
     : [...cart, {...product, cantidad: 1}];
+  try { calculateSubtotal(next); return next; } catch { return cart; }
 }
 export function updateCartQuantity(cart, id, quantity, products) {
   if (!Number.isSafeInteger(quantity)) return cart;
   if (quantity <= 0) return removeCartItem(cart, id);
   if (!hasAvailableStock({id, cantidad: quantity}, products)) return cart;
-  return cart.map(item => item.id === id ? {...item, cantidad: quantity} : item);
+  const next = cart.map(item => item.id === id ? {...item, cantidad: quantity} : item);
+  try { calculateSubtotal(next); return next; } catch { return cart; }
 }
 export function removeCartItem(cart, id) {
   return cart.filter(item => item.id !== id);
