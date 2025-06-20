@@ -1,15 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineSearch, HiOutlineMail, HiOutlinePhone, HiOutlineLocationMarker, HiOutlineShoppingBag, HiOutlineCalendar, HiOutlineCheckCircle, HiOutlineUserAdd } from 'react-icons/hi';
-import Layout from '../../components/Layout';
-import ClienteForm from './ClienteForm';
-import clienteApi from '../../api/clienteApi';
+import React, { useState, useEffect } from "react";
+import {
+  HiOutlinePlus,
+  HiOutlinePencil,
+  HiOutlineTrash,
+  HiOutlineSearch,
+  HiOutlinePhone,
+  HiOutlineLocationMarker,
+  HiOutlineShoppingBag,
+  HiOutlineCalendar,
+  HiOutlineCheckCircle,
+  HiOutlineUserAdd,
+} from "react-icons/hi";
+import Layout from "../../components/Layout";
+import ClienteForm from "./ClienteForm";
+import clienteApi from "../../api/clienteApi";
 
 const ClienteList = () => {
   const [clientes, setClientes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
   // Estados para modales
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -26,11 +37,13 @@ const ClienteList = () => {
       setLoading(true);
       setError(null);
       const response = await clienteApi.getAll();
-      console.log('Clientes response:', response);
-      setClientes(response.data || response || []);
+      if (response.length === 0) {
+        setError("No se encontraron clientes.");
+      }
+      setClientes(response);
     } catch (error) {
-      console.error('Error cargando clientes:', error);
-      setError('Error al cargar los clientes. Por favor, intenta de nuevo.');
+      console.error("Error cargando clientes:", error);
+      setError("Error al cargar los clientes. Por favor, intenta de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -43,29 +56,29 @@ const ClienteList = () => {
       setSelectedCliente(null);
       loadClientes();
     } catch (error) {
-      console.error('Error eliminando cliente:', error);
+      console.error("Error eliminando cliente:", error);
     }
   };
 
   const resetFilters = () => {
-    setSearchTerm('');
-    setStatusFilter('');
+    setSearchTerm("");
+    setStatusFilter("");
   };
 
   // Filtrar clientes
-  const filteredClientes = clientes.filter(cliente => {
+  const filteredClientes = clientes.filter((cliente) => {
     if (!cliente) return false;
 
-    const matchSearch = !searchTerm ||
-                       cliente.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                       cliente.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                       cliente.user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                       cliente.phone?.includes(searchTerm);
+    const matchSearch =
+      !searchTerm ||
+      cliente.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cliente.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cliente.phone?.includes(searchTerm);
 
     const getClienteStatus = (cliente) => {
       const ordersCount = cliente.orders?.length || 0;
-      if (ordersCount === 0) return 'nuevo';
-      return ordersCount >= 5 ? 'frecuente' : 'activo';
+      if (ordersCount === 0) return "nuevo";
+      return ordersCount >= 5 ? "frecuente" : "activo";
     };
 
     const matchStatus = !statusFilter || getClienteStatus(cliente) === statusFilter;
@@ -76,8 +89,8 @@ const ClienteList = () => {
   // Calcular estadísticas
   const getEstadisticas = () => {
     const totalClientes = clientes.length;
-    const clientesNuevos = clientes.filter(c => !c.orders || c.orders.length === 0).length;
-    const clientesFrecuentes = clientes.filter(c => c.orders && c.orders.length >= 5).length;
+    const clientesNuevos = clientes.filter((c) => !c.orders || c.orders.length === 0).length;
+    const clientesFrecuentes = clientes.filter((c) => c.orders && c.orders.length >= 5).length;
     const totalOrdenes = clientes.reduce((sum, c) => sum + (c.orders?.length || 0), 0);
 
     return { totalClientes, clientesNuevos, clientesFrecuentes, totalOrdenes };
@@ -88,24 +101,33 @@ const ClienteList = () => {
   // Funciones auxiliares
   const getClienteStatus = (cliente) => {
     const ordersCount = cliente.orders?.length || 0;
-    if (ordersCount === 0) return { text: 'Nuevo', badge: 'badge-info' };
-    if (ordersCount >= 5) return { text: 'Frecuente', badge: 'badge-success' };
-    return { text: 'Activo', badge: 'badge-warning' };
+    if (ordersCount === 0) return { text: "Nuevo", badge: "badge-info" };
+    if (ordersCount >= 5) return { text: "Frecuente", badge: "badge-success" };
+    return { text: "Activo", badge: "badge-warning" };
   };
 
   const getUltimaCompra = (cliente) => {
     if (!cliente.orders || cliente.orders.length === 0) return null;
     // Ordenar por fecha más reciente
-    const ultimaOrden = cliente.orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+    const ultimaOrden = cliente.orders.sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    )[0];
     return new Date(ultimaOrden.createdAt).toLocaleDateString();
   };
 
   const getAvatarLetter = (cliente) => {
-    return cliente.name?.charAt(0).toUpperCase() || 'C';
+    return cliente.name?.charAt(0).toUpperCase() || "C";
   };
 
   const getAvatarColor = (cliente) => {
-    const colors = ['bg-primary', 'bg-secondary', 'bg-accent', 'bg-info', 'bg-success', 'bg-warning'];
+    const colors = [
+      "bg-primary",
+      "bg-secondary",
+      "bg-accent",
+      "bg-info",
+      "bg-success",
+      "bg-warning",
+    ];
     const index = (cliente.id || 0) % colors.length;
     return colors[index];
   };
@@ -131,10 +153,7 @@ const ClienteList = () => {
             <div className="alert alert-error max-w-md">
               <p>{error}</p>
             </div>
-            <button
-              className="btn btn-primary mt-4"
-              onClick={loadClientes}
-            >
+            <button className="btn btn-primary mt-4" onClick={loadClientes}>
               Reintentar
             </button>
           </div>
@@ -170,7 +189,9 @@ const ClienteList = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-medium text-base-content/60">Total Clientes</h3>
-                    <p className="text-2xl font-bold text-primary mt-1">{estadisticas.totalClientes}</p>
+                    <p className="text-2xl font-bold text-primary mt-1">
+                      {estadisticas.totalClientes}
+                    </p>
                   </div>
                   <div className="p-3 bg-primary/10 rounded-full">
                     <HiOutlineUserAdd className="text-primary" size={24} />
@@ -185,7 +206,9 @@ const ClienteList = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-medium text-base-content/60">Nuevos</h3>
-                    <p className="text-2xl font-bold text-info mt-1">{estadisticas.clientesNuevos}</p>
+                    <p className="text-2xl font-bold text-info mt-1">
+                      {estadisticas.clientesNuevos}
+                    </p>
                   </div>
                   <div className="p-3 bg-info/10 rounded-full">
                     <HiOutlineUserAdd className="text-info" size={24} />
@@ -200,7 +223,9 @@ const ClienteList = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-medium text-base-content/60">Frecuentes</h3>
-                    <p className="text-2xl font-bold text-success mt-1">{estadisticas.clientesFrecuentes}</p>
+                    <p className="text-2xl font-bold text-success mt-1">
+                      {estadisticas.clientesFrecuentes}
+                    </p>
                   </div>
                   <div className="p-3 bg-success/10 rounded-full">
                     <HiOutlineCheckCircle className="text-success" size={24} />
@@ -215,7 +240,9 @@ const ClienteList = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-medium text-base-content/60">Total Órdenes</h3>
-                    <p className="text-2xl font-bold text-accent mt-1">{estadisticas.totalOrdenes}</p>
+                    <p className="text-2xl font-bold text-accent mt-1">
+                      {estadisticas.totalOrdenes}
+                    </p>
                   </div>
                   <div className="p-3 bg-accent/10 rounded-full">
                     <HiOutlineShoppingBag className="text-accent" size={24} />
@@ -252,32 +279,32 @@ const ClienteList = () => {
                   type="radio"
                   name="status-filter"
                   aria-label="Todos"
-                  checked={statusFilter === ''}
-                  onChange={() => setStatusFilter('')}
+                  checked={statusFilter === ""}
+                  onChange={() => setStatusFilter("")}
                 />
                 <input
                   className="btn"
                   type="radio"
                   name="status-filter"
                   aria-label="Nuevos"
-                  checked={statusFilter === 'nuevo'}
-                  onChange={() => setStatusFilter('nuevo')}
+                  checked={statusFilter === "nuevo"}
+                  onChange={() => setStatusFilter("nuevo")}
                 />
                 <input
                   className="btn"
                   type="radio"
                   name="status-filter"
                   aria-label="Activos"
-                  checked={statusFilter === 'activo'}
-                  onChange={() => setStatusFilter('activo')}
+                  checked={statusFilter === "activo"}
+                  onChange={() => setStatusFilter("activo")}
                 />
                 <input
                   className="btn"
                   type="radio"
                   name="status-filter"
                   aria-label="Frecuentes"
-                  checked={statusFilter === 'frecuente'}
-                  onChange={() => setStatusFilter('frecuente')}
+                  checked={statusFilter === "frecuente"}
+                  onChange={() => setStatusFilter("frecuente")}
                 />
               </div>
             </div>
@@ -285,10 +312,7 @@ const ClienteList = () => {
             {/* Botón limpiar filtros */}
             {(searchTerm || statusFilter) && (
               <div className="flex justify-center">
-                <button
-                  onClick={resetFilters}
-                  className="btn btn-outline btn-sm gap-2"
-                >
+                <button onClick={resetFilters} className="btn btn-outline btn-sm gap-2">
                   <HiOutlineSearch size={16} />
                   Limpiar filtros
                 </button>
@@ -332,12 +356,11 @@ const ClienteList = () => {
               <div className="card-body text-center">
                 <HiOutlineSearch size={48} className="mx-auto text-base-content/30 mb-4" />
                 <h3 className="card-title justify-center">Sin resultados</h3>
-                <p className="text-base-content/60">No se encontraron clientes con los filtros aplicados</p>
+                <p className="text-base-content/60">
+                  No se encontraron clientes con los filtros aplicados
+                </p>
                 <div className="card-actions justify-center mt-4">
-                  <button
-                    onClick={resetFilters}
-                    className="btn btn-outline gap-2"
-                  >
+                  <button onClick={resetFilters} className="btn btn-outline gap-2">
                     Limpiar filtros
                   </button>
                 </div>
@@ -351,26 +374,29 @@ const ClienteList = () => {
               const ultimaCompra = getUltimaCompra(cliente);
 
               return (
-                <div key={cliente.id} className="card bg-base-100 shadow-sm hover:shadow-md transition-all duration-200 border border-base-300">
+                <div
+                  key={cliente.id}
+                  className="card bg-base-100 shadow-sm hover:shadow-md transition-all duration-200 border border-base-300"
+                >
                   {/* Header del card */}
                   <div className="card-body p-4">
                     {/* Avatar y acciones */}
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className="avatar avatar-placeholder">
-                          <div className={`${getAvatarColor(cliente)} text-neutral-content rounded-full w-12`}>
-                            <span className="text-lg font-bold">
-                              {getAvatarLetter(cliente)}
-                            </span>
+                          <div
+                            className={`${getAvatarColor(
+                              cliente
+                            )} text-neutral-content rounded-full w-12`}
+                          >
+                            <span className="text-lg font-bold">{getAvatarLetter(cliente)}</span>
                           </div>
                         </div>
                         <div>
                           <h3 className="font-bold text-base">
                             {cliente.name} {cliente.lastName}
                           </h3>
-                          <div className={`badge ${status.badge} badge-sm`}>
-                            {status.text}
-                          </div>
+                          <div className={`badge ${status.badge} badge-sm`}>{status.text}</div>
                         </div>
                       </div>
 
@@ -404,13 +430,8 @@ const ClienteList = () => {
                     {/* Información de contacto */}
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm text-base-content/70">
-                        <HiOutlineMail size={16} />
-                        <span className="truncate">{cliente.user?.email || 'Sin email'}</span>
-                      </div>
-
-                      <div className="flex items-center gap-2 text-sm text-base-content/70">
                         <HiOutlinePhone size={16} />
-                        <span>{cliente.phone || 'Sin teléfono'}</span>
+                        <span>{cliente.phone || "Sin teléfono"}</span>
                       </div>
 
                       {cliente.address && (
@@ -433,9 +454,7 @@ const ClienteList = () => {
                       </div>
                       <div>
                         <p className="text-sm text-base-content/60">Última compra</p>
-                        <p className="text-xs text-base-content/70">
-                          {ultimaCompra || 'Nunca'}
-                        </p>
+                        <p className="text-xs text-base-content/70">{ultimaCompra || "Nunca"}</p>
                       </div>
                     </div>
                   </div>
@@ -457,10 +476,7 @@ const ClienteList = () => {
                 }}
               />
               <div className="modal-action">
-                <button
-                  className="btn btn-ghost"
-                  onClick={() => setShowCreateModal(false)}
-                >
+                <button className="btn btn-ghost" onClick={() => setShowCreateModal(false)}>
                   Cancelar
                 </button>
               </div>
@@ -502,14 +518,14 @@ const ClienteList = () => {
             <div className="modal-box">
               <h3 className="font-bold text-lg">Confirmar eliminación</h3>
               <p className="py-4">
-                ¿Estás seguro de que deseas eliminar al cliente "<strong>{selectedCliente.name} {selectedCliente.lastName}</strong>"?
-                Esta acción no se puede deshacer.
+                ¿Estás seguro de que deseas eliminar al cliente "
+                <strong>
+                  {selectedCliente.name} {selectedCliente.lastName}
+                </strong>
+                "? Esta acción no se puede deshacer.
               </p>
               <div className="modal-action">
-                <button
-                  className="btn btn-error"
-                  onClick={handleDeleteCliente}
-                >
+                <button className="btn btn-error" onClick={handleDeleteCliente}>
                   Eliminar
                 </button>
                 <button

@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { FiPlus, FiEdit, FiTrash2, FiSearch } from 'react-icons/fi';
-import Layout from '../../components/Layout';
-import CategoriaForm from './CategoriaForm';
-import categoriaApi from '../../api/categoriaApi';
+import React, { useState, useEffect } from "react";
+import { FiPlus, FiEdit, FiTrash2, FiSearch } from "react-icons/fi";
+import Layout from "../../components/Layout";
+import CategoriaForm from "./CategoriaForm";
+import categoriaApi from "../../api/categoriaApi";
 
 const CategoriaList = () => {
   const [categorias, setCategorias] = useState([]);
   const [filteredCategorias, setFilteredCategorias] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategoria, setSelectedCategoria] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -19,7 +19,7 @@ const CategoriaList = () => {
       setCategorias(data);
       setFilteredCategorias(data);
     } catch (error) {
-      console.error('Error al cargar categorías:', error);
+      console.error("Error al cargar categorías:", error);
     } finally {
       setIsLoading(false);
     }
@@ -31,7 +31,7 @@ const CategoriaList = () => {
 
   // Filtrar categorías por búsqueda
   useEffect(() => {
-    const filtered = categorias.filter(categoria =>
+    const filtered = categorias.filter((categoria) =>
       categoria.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredCategorias(filtered);
@@ -40,19 +40,19 @@ const CategoriaList = () => {
   // Abrir modal de crear
   const handleCreate = () => {
     setSelectedCategoria(null);
-    document.getElementById('categoria_modal').showModal();
+    document.getElementById("categoria_modal").showModal();
   };
 
   // Abrir modal de editar
   const handleEdit = (categoria) => {
     setSelectedCategoria(categoria);
-    document.getElementById('categoria_modal').showModal();
+    document.getElementById("categoria_modal").showModal();
   };
 
   // Abrir modal de confirmar eliminación
   const handleDelete = (categoria) => {
     setSelectedCategoria(categoria);
-    document.getElementById('delete_modal').showModal();
+    document.getElementById("delete_modal").showModal();
   };
 
   // Confirmar eliminación
@@ -60,16 +60,16 @@ const CategoriaList = () => {
     try {
       await categoriaApi.delete(selectedCategoria.id);
       loadCategorias();
-      document.getElementById('delete_modal').close();
+      document.getElementById("delete_modal").close();
     } catch (error) {
-      console.error('Error al eliminar categoría:', error);
+      console.error("Error al eliminar categoría:", error);
     }
   };
 
   // Callback para actualizar lista después de operaciones CRUD
   const handleSuccess = () => {
     loadCategorias();
-    document.getElementById('categoria_modal').close();
+    document.getElementById("categoria_modal").close();
   };
 
   return (
@@ -78,15 +78,12 @@ const CategoriaList = () => {
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-base-content">Gestión de Componentes UI</h1>
-            <p className="text-gray-600 mt-1">Organiza y administra tus componentes de interfaz</p>
+            <h1 className="text-3xl font-bold text-base-content">Gestión de Categorías</h1>
+            <p className="text-gray-600 mt-1">Organiza y administra tus categorías de productos</p>
           </div>
-          <button
-            className="btn btn-primary"
-            onClick={handleCreate}
-          >
+          <button className="btn btn-primary" onClick={handleCreate}>
             <FiPlus className="w-4 h-4" />
-            Nuevo Componente
+            Nueva Categoría
           </button>
         </div>
 
@@ -97,7 +94,7 @@ const CategoriaList = () => {
             <input
               type="text"
               className="grow"
-              placeholder="Buscar componentes UI..."
+              placeholder="Buscar categorías..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -114,14 +111,17 @@ const CategoriaList = () => {
         {/* Grid de categorías */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredCategorias.map((categoria) => (
-            <div key={categoria.id} className="card bg-base-100 shadow-lg hover:shadow-xl transition-shadow">
+            <div
+              key={categoria.id}
+              className="card bg-base-100 shadow-lg hover:shadow-xl transition-shadow"
+            >
               <figure className="h-48">
                 <img
                   src={categoria.image}
                   alt={categoria.name}
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    e.target.src = 'https://via.placeholder.com/300x200?text=Sin+Imagen';
+                    e.target.src = "https://via.placeholder.com/300x200?text=Sin+Imagen";
                   }}
                 />
               </figure>
@@ -129,18 +129,19 @@ const CategoriaList = () => {
                 <h2 className="card-title justify-between">
                   <span className="truncate">{categoria.name}</span>
                   <div className="badge badge-secondary whitespace-nowrap">
-                    {categoria.products?.length || 0} elementos
+                    {categoria.products?.length || 0} productos
                   </div>
                 </h2>
                 <p className="text-sm text-gray-600">
-                  Implementado: {new Date(categoria.createdAt).toLocaleDateString('es-ES', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
+                  Creada:{" "}
+                  {new Date(categoria.createdAt).toLocaleDateString("es-ES", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
                   })}
                 </p>
                 <div className="card-actions justify-end mt-4">
-                  <div className="tooltip" data-tip="Editar componente">
+                  <div className="tooltip" data-tip="Editar categoría">
                     <button
                       className="btn btn-sm btn-ghost hover:btn-info"
                       onClick={() => handleEdit(categoria)}
@@ -148,7 +149,7 @@ const CategoriaList = () => {
                       <FiEdit className="w-4 h-4" />
                     </button>
                   </div>
-                  <div className="tooltip" data-tip="Remover componente">
+                  <div className="tooltip" data-tip="Eliminar categoría">
                     <button
                       className="btn btn-sm btn-ghost hover:btn-error"
                       onClick={() => handleDelete(categoria)}
@@ -166,7 +167,9 @@ const CategoriaList = () => {
         {!isLoading && filteredCategorias.length === 0 && (
           <div className="text-center py-8">
             <p className="text-gray-500">
-              {searchTerm ? 'No se encontraron componentes que coincidan con la búsqueda' : 'No hay componentes UI registrados'}
+              {searchTerm
+                ? "No se encontraron categorías que coincidan con la búsqueda"
+                : "No hay categorías registradas"}
             </p>
           </div>
         )}
@@ -180,18 +183,17 @@ const CategoriaList = () => {
 
             <div className="mb-4">
               <h3 className="font-bold text-lg text-center">
-                {selectedCategoria ? 'Editar Componente UI' : 'Nuevo Componente UI'}
+                {selectedCategoria ? "Editar Categoría" : "Nueva Categoría"}
               </h3>
               <p className="text-center text-base-content/60 text-sm mt-1">
-                {selectedCategoria ? 'Modifica las propiedades del componente' : 'Define las características del componente'}
+                {selectedCategoria
+                  ? "Modifica las propiedades de la categoría"
+                  : "Define las características de la categoría"}
               </p>
             </div>
 
             <div className="w-full">
-              <CategoriaForm
-                categoria={selectedCategoria}
-                onSuccess={handleSuccess}
-              />
+              <CategoriaForm categoria={selectedCategoria} onSuccess={handleSuccess} />
             </div>
           </div>
         </dialog>
@@ -202,13 +204,24 @@ const CategoriaList = () => {
             <h3 className="font-bold text-lg text-error">⚠️ Confirmar eliminación</h3>
             <div className="py-4">
               <p className="mb-2">
-                Esta acción eliminará el componente <strong>"{selectedCategoria?.name}"</strong> del sistema.
+                Esta acción eliminará la categoría <strong>"{selectedCategoria?.name}"</strong> del
+                sistema.
               </p>
               <div className="alert alert-warning">
-                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="stroke-current shrink-0 h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                  />
                 </svg>
-                <span>Los elementos asociados a este componente se verán afectados.</span>
+                <span>Los productos asociados a esta categoría se verán afectados.</span>
               </div>
             </div>
             <div className="modal-action">

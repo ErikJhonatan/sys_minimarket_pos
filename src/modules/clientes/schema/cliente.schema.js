@@ -17,15 +17,6 @@ export const createCustomerSchema = z.object({
   address: z.string()
     .min(1, "La dirección es obligatoria")
     .optional(),
-  user: z.object({
-    email: z.string()
-      .email("Debe ser un correo electrónico válido"),
-    password: z.string()
-      .min(6, "La contraseña debe tener al menos 6 caracteres"),
-    role: z.enum(['customer'], {
-      errorMap: () => ({ message: "El rol debe ser 'customer'" }),
-    }).default('customer'),
-  }),
 });
 
 export const updateCustomerSchema = z.object({
@@ -35,8 +26,7 @@ export const updateCustomerSchema = z.object({
     .optional(),
   lastName: z.string().optional(),
   phone: z.string().optional(),
-  address: z.string().optional(),
-  userId: z.number().int("El ID de usuario debe ser un número entero").optional(),
+  address: z.string().optional()
 });
 
 

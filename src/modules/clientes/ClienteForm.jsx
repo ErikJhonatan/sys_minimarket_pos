@@ -1,9 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   HiOutlineUser,
-  HiOutlineMail,
   HiOutlinePhone,
   HiOutlineLocationMarker,
   HiOutlineIdentification
@@ -14,6 +13,7 @@ import clienteApi from '../../api/clienteApi';
 const ClienteForm = ({ cliente, onSuccess }) => {
   const isEditing = !!cliente;
   const schema = isEditing ? updateCustomerSchema : createCustomerSchema;
+  const [error, setError] = useState('');
 
   const {
     register,
@@ -27,11 +27,7 @@ const ClienteForm = ({ cliente, onSuccess }) => {
       name: '',
       lastName: '',
       phone: '',
-      address: '',
-      user: {
-        email: '',
-        role: 'customer'
-      }
+      address: ''
     }
   });
 
@@ -42,10 +38,6 @@ const ClienteForm = ({ cliente, onSuccess }) => {
       setValue('lastName', cliente.lastName || '');
       setValue('phone', cliente.phone || '');
       setValue('address', cliente.address || '');
-      if (cliente.user) {
-        setValue('user.email', cliente.user.email || '');
-        setValue('user.role', 'customer');
-      }
     } else {
       reset();
     }
@@ -53,24 +45,36 @@ const ClienteForm = ({ cliente, onSuccess }) => {
 
   const onSubmit = async (data) => {
     try {
+      setError(''); // Limpiar errores previos
+
       if (isEditing) {
-        // Para actualizar, solo enviamos los campos del cliente (sin user)
-        const { user, ...customerData } = data;
-        await clienteApi.update(cliente.id, customerData);
+        await clienteApi.update(cliente.id, data);
       } else {
-        // Para crear, enviamos todos los datos incluyendo user
-        await clienteApi.create(data);
+        console.log('Datos a enviar:', data);
+        const response = await clienteApi.create(data);
+        console.log('Respuesta del servidor:', response);
       }
       onSuccess();
-      reset();
+      if (!isEditing) {
+        reset(); // Solo resetear al crear
+      }
     } catch (error) {
       console.error('Error al guardar cliente:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Error desconocido';
+      setError(`Error al ${isEditing ? 'actualizar' : 'crear'} cliente: ${errorMessage}`);
     }
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="w-full">
       <div className="space-y-4">
+        {/* Mostrar error general */}
+        {error && (
+          <div className="alert alert-error">
+            <span className="text-sm">{error}</span>
+          </div>
+        )}
+
         {/* Nombre */}
         <div className="form-control w-full">
           <label className="label">
@@ -147,43 +151,23 @@ const ClienteForm = ({ cliente, onSuccess }) => {
           {errors.address && <p className="text-error text-xs mt-1">{errors.address.message}</p>}
         </div>
 
-        {/* Campos de usuario (solo para crear) */}
-        {!isEditing && (
-          <>
-            {/* Email */}
-            <div className="form-control w-full">
-              <label className="label">
-                <span className="label-text">Correo electrónico</span>
-              </label>
-              <div className="relative">
-                <input
-                  type="email"
-                  placeholder="juan@email.com"
-                  className={`input input-bordered w-full pl-10 ${errors.user?.email ? 'input-error' : ''}`}
-                  {...register('user.email')}
-                />
-                <span className="absolute top-3 left-3 text-base-content/50 pointer-events-none z-10">
-                  <HiOutlineMail size={18} />
-                </span>
-              </div>
-              {errors.user?.email && <p className="text-error text-xs mt-1">{errors.user.email.message}</p>}
-            </div>
-          </>
-        )}
-
         {/* Botón submit */}
         <div className="w-full pt-2">
           <button
             type="submit"
-            className={`btn btn-primary w-full ${isSubmitting ? 'loading' : ''}`}
+            className={`btn btn-primary w-full ${isSubmitting ? 'loading btn-disabled' : ''}`}
             disabled={isSubmitting}
           >
-            {isSubmitting
-              ? 'Guardando...'
-              : isEditing
-                ? 'Actualizar Cliente'
-                : 'Crear Cliente'
-            }
+            {isSubmitting ? (
+              <>
+                <span className="loading loading-spinner loading-sm mr-2"></span>
+                Guardando...
+              </>
+            ) : isEditing ? (
+              'Actualizar Cliente'
+            ) : (
+              'Crear Cliente'
+            )}
           </button>
         </div>
       </div>
