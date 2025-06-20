@@ -34,9 +34,6 @@ const ProductoList = () => {
         categoriaApi.getAll()
       ]);
 
-      console.log('Productos response:', productosResponse);
-      console.log('Categorias response:', categoriasResponse);
-
       setProductos(productosResponse.data || productosResponse || []);
       setCategorias(categoriasResponse.data || categoriasResponse || []);
     } catch (error) {
@@ -50,7 +47,6 @@ const ProductoList = () => {
   const loadProductos = async () => {
     try {
       const response = await productoApi.getAll();
-      console.log('Reloading productos:', response);
       setProductos(response.data || response || []);
     } catch (error) {
       console.error('Error recargando productos:', error);
