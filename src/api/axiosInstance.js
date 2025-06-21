@@ -4,6 +4,7 @@ import axios from "axios";
 const axiosInstance = axios.create({
   baseURL: config.apiUrl,
   timeout: 10000,
+  withCredentials: true, // Importante para CORS con credenciales
   headers: {
     "Content-Type": "application/json",
   },
